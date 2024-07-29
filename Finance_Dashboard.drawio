@@ -1,11 +1,60 @@
-<mxfile host="app.diagrams.net" modified="2024-07-29T13:35:56.272Z" agent="5.0 (Windows)" etag="l2pB5ZJBmP-oSBrF-0sS" version="20.8.21" type="github">
+<mxfile host="app.diagrams.net" modified="2024-07-29T13:46:00.674Z" agent="5.0 (Windows)" etag="GPOO8U1WCaAz1J4f-tMy" version="20.8.21" type="github">
   <diagram name="Page-1" id="7Gwu6FjBpwK-aESgwzup">
     <mxGraphModel dx="1050" dy="577" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="nNuZOWND_Y1c5IWIzj81-1" value="&lt;h1&gt;Heading&lt;/h1&gt;&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.&lt;/p&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="355" y="10" width="140" height="50" as="geometry" />
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-1" value="&lt;h1&gt;Finance Dashboard&lt;br&gt;&lt;/h1&gt;&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.&lt;/p&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="310" y="10" width="260" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-5" value="Dashboard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="30" y="90" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-6" value="Income" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="355" y="90" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-7" value="Expense" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="690" y="90" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-8" value="" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="150" width="760" height="490" as="geometry" />
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-9" value="" style="image;html=1;image=img/lib/clip_art/finance/Pie_Chart_128x128.png" vertex="1" parent="1">
+          <mxGeometry x="120" y="200" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-10" value="" style="image;html=1;image=img/lib/clip_art/finance/Pie_Chart_128x128.png" vertex="1" parent="1">
+          <mxGeometry x="120" y="350" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-11" value="" style="image;html=1;image=img/lib/clip_art/finance/Pie_Chart_128x128.png" vertex="1" parent="1">
+          <mxGeometry x="120" y="530" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-12" value="Dropdown button" style="html=1;shadow=0;dashed=0;shape=mxgraph.bootstrap.rrect;rSize=5;strokeColor=none;strokeWidth=1;fillColor=#6C767D;fontColor=#ffffff;whiteSpace=wrap;align=right;verticalAlign=middle;fontStyle=0;fontSize=14;spacingRight=20;" vertex="1" parent="1">
+          <mxGeometry x="335" y="210" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-13" value="" style="shape=triangle;direction=south;fillColor=#ffffff;strokeColor=none;perimeter=none;" vertex="1" parent="nNuZOWND_Y1c5IWIzj81-12">
+          <mxGeometry x="1" y="0.5" width="10" height="5" relative="1" as="geometry">
+            <mxPoint x="-17" y="-2.5" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-14" value="Add" style="rounded=1;fillColor=#0057D8;strokeColor=none;html=1;fontColor=#ffffff;align=center;verticalAlign=middle;fontStyle=0;fontSize=12;sketch=0;" vertex="1" parent="1">
+          <mxGeometry x="660" y="290" width="86" height="33" as="geometry" />
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-15" value="" style="image;html=1;image=img/lib/clip_art/finance/Pie_Chart_128x128.png" vertex="1" parent="1">
+          <mxGeometry x="335" y="355" width="155" height="185" as="geometry" />
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-16" value="Dropdown button" style="html=1;shadow=0;dashed=0;shape=mxgraph.bootstrap.rrect;rSize=5;strokeColor=none;strokeWidth=1;fillColor=#6C767D;fontColor=#ffffff;whiteSpace=wrap;align=right;verticalAlign=middle;fontStyle=0;fontSize=14;spacingRight=20;" vertex="1" parent="1">
+          <mxGeometry x="610" y="210" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-17" value="" style="shape=triangle;direction=south;fillColor=#ffffff;strokeColor=none;perimeter=none;" vertex="1" parent="nNuZOWND_Y1c5IWIzj81-16">
+          <mxGeometry x="1" y="0.5" width="10" height="5" relative="1" as="geometry">
+            <mxPoint x="-17" y="-2.5" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-18" value="Add" style="rounded=1;fillColor=#0057D8;strokeColor=none;html=1;fontColor=#ffffff;align=center;verticalAlign=middle;fontStyle=0;fontSize=12;sketch=0;" vertex="1" parent="1">
+          <mxGeometry x="399" y="290" width="86" height="33" as="geometry" />
+        </mxCell>
+        <mxCell id="nNuZOWND_Y1c5IWIzj81-19" value="" style="image;html=1;image=img/lib/clip_art/finance/Pie_Chart_128x128.png" vertex="1" parent="1">
+          <mxGeometry x="591" y="365" width="155" height="185" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
