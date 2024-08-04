@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import getHelloMessage from './api.js';
 import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min';
+import Navbar from './Navbar.js';
+import Account from './Account.js';
 
 function App() {
   const [message, setMessage] = useState('');
@@ -21,8 +25,10 @@ function App() {
   return (
     <div className="App">
       <div className="App-header">
-        {/* <h1>FINANCE DASHBOARD</h1> */}
-        <h1>DASHBOARD</h1>
+        <Navbar/>
+        <h1>FINANCE DASHBOARD</h1>
+        <Account details="Srijan"/>
+        <h1> </h1>
       </div>
 
       <div className="sheets">
