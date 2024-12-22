@@ -1,0 +1,111 @@
+.income-container {
+  display: flex;
+  justify-content: space-between;
+  padding: 30px;
+}
+
+.income-left,
+.income-right {
+  width: 45%;
+  background: linear-gradient(to right, #e0f2e0, #c9d6ff); /* Soft green gradient */
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0, 128, 0, 0.2); /* Greenish shadow */
+}
+
+.income-left {
+  background-color: #e6ffe6; /* Light green */
+}
+
+.income-right {
+  background-color: #f0fff0; /* Very light green */
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #2f4f2f; /* Dark greenish-gray */
+}
+
+select,
+input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #66bb66; /* Medium green border */
+  border-radius: 5px;
+  font-size: 14px;
+  background-color: #f0fff0; /* Light green input background */
+}
+
+button {
+  background-color: #4caf50; /* Primary green button */
+  color: #ffffff;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #388e3c; /* Darker green on hover */
+}
+
+#delete {
+  margin-right: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 25px;
+}
+
+table,
+th,
+td {
+  border: 1px solid #66bb66; /* Green border */
+}
+
+th,
+td {
+  padding: 10px;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  background-color: #4caf50; /* Green table header */
+  color: #ffffff;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #e6ffe6; /* Light green row background */
+}
+
+button {
+  margin: 8px 5px;
+}
+
+button:first-of-type {
+  background-color: #8bc34a; /* Lighter green button */
+}
+
+button:last-of-type {
+  background-color: #d9534f; /* Red button remains unchanged */
+}
+
+button:first-of-type:hover {
+  background-color: #7cb342; /* Darker green on hover */
+}
+
+button:last-of-type:hover {
+  background-color: #c9302c; /* Darker red on hover */
+}

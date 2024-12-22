@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import './Navbar.css'
 
+
 function Navbar() {
   useEffect(() => {
     const hamMenu = document.querySelector('.ham-menu');
@@ -17,13 +18,16 @@ function Navbar() {
   }, []);
 
   return (
-    <><div className="off-screen-menu">
-      <ul>
-        <li><a href="/Dashboard">Dashboard</a></li>
-        <li><a href="/Income">Income</a></li>
-        <li><a href="/Expense">Expense</a></li>
-      </ul>
-    </div><nav>
+    <>
+      <div className="off-screen-menu">
+        <ul>
+        <li><a href="/">Home</a></li>
+          <li><a href="/Dashboard">Dashboard</a></li>
+          <li><a href="/Income">Income</a></li>
+          <li><a href="/Expense">Expense</a></li>
+        </ul>
+      </div>
+      <nav>
         <div className="ham-menu">
           <span></span>
           <span></span>
