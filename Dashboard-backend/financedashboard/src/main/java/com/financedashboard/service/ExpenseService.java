@@ -9,4 +9,5 @@ public interface ExpenseService {
     List<Expense> saveExpense(List<Expense> expense);
     Expense updateExpense(Long id, Expense expense);
     void deleteExpense(Long id);
+    void deleteAllExpenses(List<Long> ids);
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { DotsHorizontalIcon } from "@radix-ui/react-icons"
-import { CalendarIcon, Edit, Save, X } from "lucide-react"
+import { CalendarIcon, Edit, Save, Trash2, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -22,6 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/components/ui/use-toast"
 import { useCurrency } from "@/hooks/use-currency"
 import { cn } from "@/lib/utils"
+import { deleteExpenses, updateExpense } from "@/lib/api"
 
 interface Expense {
   id: number
@@ -69,25 +70,30 @@ export function ExpenseTable({ expenses, onExpenseDeleted, onExpenseUpdated }: E
     }
   }
 
-  const deleteExpense = async (id: number) => {
-    try {
-      const response = await fetch(`http://localhost:8282/api/expense/${id}`, {
-        method: "DELETE",
+  const deleteSelectedExpenses = async () => {
+    if (selectedExpenses.length === 0) {
+      toast({
+        title: "No selection",
+        description: "Please select at least one expense to delete.",
+        variant: "destructive",
       })
+      return
+    }
 
-      if (response.ok) {
-        toast({
-          title: "Expense deleted successfully",
-          description: "The expense record has been removed.",
-        })
-        onExpenseDeleted()
-      } else {
-        throw new Error("Failed to delete expense")
-      }
+    try {
+      await deleteExpenses(selectedExpenses)
+      toast({
+        title: "Expenses deleted successfully",
+        description: `${selectedExpenses.length} expense(s) have been removed.`,
+        className:
+          "bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950/50 dark:border-yellow-800/50 dark:text-yellow-300",
+      })
+      setSelectedExpenses([])
+      onExpenseDeleted()
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to delete expense. Please try again.",
+        description: "Failed to delete expenses. Please try again.",
         variant: "destructive",
       })
     }
@@ -96,7 +102,7 @@ export function ExpenseTable({ expenses, onExpenseDeleted, onExpenseUpdated }: E
   const startEdit = (expense: Expense) => {
     setEditingExpense(expense.id)
     setEditForm({
-      category: expense.category,
+      category: expense.category || "foods-and-drinks", // Provide default value
       amount: expense.amount.toString(),
       date: new Date(expense.date),
       description: expense.description || "",
@@ -115,29 +121,22 @@ export function ExpenseTable({ expenses, onExpenseDeleted, onExpenseUpdated }: E
 
   const saveEdit = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:8282/api/expense/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          category: editForm.category,
-          amount: Number(editForm.amount),
-          date: editForm.date.toISOString().split("T")[0],
-          description: editForm.description,
-        }),
-      })
-
-      if (response.ok) {
-        toast({
-          title: "Expense updated successfully",
-          description: "The expense record has been updated.",
-        })
-        setEditingExpense(null)
-        onExpenseUpdated()
-      } else {
-        throw new Error("Failed to update expense")
+      const updateData = {
+        category: editForm.category,
+        amount: Number(editForm.amount),
+        date: editForm.date.toISOString().split("T")[0],
+        description: editForm.description,
       }
+
+      await updateExpense(id, updateData)
+      toast({
+        title: "Expense updated successfully",
+        description: "The expense record has been updated.",
+        className:
+          "bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950/50 dark:border-yellow-800/50 dark:text-yellow-300",
+      })
+      setEditingExpense(null)
+      onExpenseUpdated()
     } catch (error) {
       toast({
         title: "Error",
@@ -174,6 +173,16 @@ export function ExpenseTable({ expenses, onExpenseDeleted, onExpenseUpdated }: E
         <Button onClick={updateSelectedExpenses} disabled={selectedExpenses.length !== 1} size="sm" variant="outline">
           <Edit className="h-4 w-4 mr-2" />
           Edit Selected
+        </Button>
+        <Button
+          onClick={deleteSelectedExpenses}
+          disabled={selectedExpenses.length === 0}
+          size="sm"
+          variant="outline"
+          className="text-red-600 hover:bg-red-100"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete Selected
         </Button>
         <span className="text-sm text-muted-foreground">
           {selectedExpenses.length} of {expenses.length} selected
@@ -248,19 +257,25 @@ export function ExpenseTable({ expenses, onExpenseDeleted, onExpenseUpdated }: E
                         onValueChange={(value) => setEditForm({ ...editForm, category: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="housing">Housing</SelectItem>
-                          <SelectItem value="food">Food</SelectItem>
-                          <SelectItem value="transportation">Transportation</SelectItem>
-                          <SelectItem value="utilities">Utilities</SelectItem>
-                          <SelectItem value="entertainment">Entertainment</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="foods-and-drinks">Foods and Drinks</SelectItem>
+                          <SelectItem value="rent">Rent</SelectItem>
+                          <SelectItem value="electricity">Electricity</SelectItem>
+                          <SelectItem value="travel">Travel</SelectItem>
+                          <SelectItem value="fd-rd-sip-insurance-other-plans">
+                            FD/RD/SIP Insurance/Other plans
+                          </SelectItem>
+                          <SelectItem value="investments">Investments</SelectItem>
+                          <SelectItem value="daily-essentials">Daily essentials</SelectItem>
+                          <SelectItem value="clothes">Clothes</SelectItem>
+                          <SelectItem value="haircut">Haircut</SelectItem>
+                          <SelectItem value="other-expenditures">Other Expenditures</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
-                      <span className="capitalize">{item.category}</span>
+                      <span className="capitalize">{item.category.replace(/-/g, " ")}</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -309,7 +324,27 @@ export function ExpenseTable({ expenses, onExpenseDeleted, onExpenseUpdated }: E
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => startEdit(item)}>Edit</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600" onClick={() => deleteExpense(item.id)}>
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={async () => {
+                              try {
+                                await deleteExpenses([item.id])
+                                toast({
+                                  title: "Expense deleted successfully",
+                                  description: "The expense record has been removed.",
+                                  className:
+                                    "bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950/50 dark:border-yellow-800/50 dark:text-yellow-300",
+                                })
+                                onExpenseDeleted()
+                              } catch (error) {
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to delete expense. Please try again.",
+                                  variant: "destructive",
+                                })
+                              }
+                            }}
+                          >
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>

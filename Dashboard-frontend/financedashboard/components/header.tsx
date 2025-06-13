@@ -17,24 +17,33 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CurrencySelector } from "@/components/currency-selector"
+import { useUser } from "@/hooks/use-user"
 
 export function Header() {
   const router = useRouter()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const { user, setUserId, setUser } = useUser()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   const handleLogout = () => {
-    // Simulate logout
+    // Clear user information on logout
+    setUserId(null)
+    setUser(null)
     router.push("/")
   }
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark")
   }
+
+  // Get user information from context or use fallbacks
+  const userName = user?.name || "User"
+  const userEmail = user?.email || "user@example.com"
+  const userInitial = userName.charAt(0).toUpperCase()
 
   if (!mounted) {
     return (
@@ -50,9 +59,9 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src="/placeholder.svg?height=40&width=40&text=😊" alt="User" />
+                  <AvatarImage src={`/placeholder.svg?height=40&width=40&text=${userInitial}`} alt="User" />
                   <AvatarFallback className="bg-gradient-to-br from-purple-400 to-pink-400 text-white">
-                    😊
+                    {userInitial}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -60,8 +69,8 @@ export function Header() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Priya Sharma</p>
-                  <p className="text-xs leading-none text-muted-foreground">priya.sharma@example.com</p>
+                  <p className="text-sm font-medium leading-none">{userName}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -90,16 +99,18 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-10 w-10">
-                <AvatarImage src="/placeholder.svg?height=40&width=40&text=😊" alt="User" />
-                <AvatarFallback className="bg-gradient-to-br from-purple-400 to-pink-400 text-white">😊</AvatarFallback>
+                <AvatarImage src={`/placeholder.svg?height=40&width=40&text=${userInitial}`} alt="User" />
+                <AvatarFallback className="bg-gradient-to-br from-purple-400 to-pink-400 text-white">
+                  {userInitial}
+                </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Priya Sharma</p>
-                <p className="text-xs leading-none text-muted-foreground">priya.sharma@example.com</p>
+                <p className="text-sm font-medium leading-none">{userName}</p>
+                <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

@@ -82,7 +82,9 @@ export function RecentTransactions({ incomes, expenses }: RecentTransactionsProp
           <div
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-full",
-              transaction.type === "income" ? "bg-emerald-100" : "bg-rose-100",
+              transaction.type === "income"
+                ? "bg-emerald-100 dark:bg-emerald-900/20"
+                : "bg-rose-100 dark:bg-rose-900/20",
             )}
           >
             {transaction.type === "income" ? (

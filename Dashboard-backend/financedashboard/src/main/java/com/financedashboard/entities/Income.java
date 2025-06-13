@@ -60,7 +60,7 @@ public class Income {
     public void setDate(LocalDate date) {
         this.date = date;
     }
-        public String getDescription() {
+    public String getDescription() {
         return description;
     }
     public void setDescription(String description) {

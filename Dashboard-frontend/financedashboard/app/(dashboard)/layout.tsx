@@ -1,14 +1,11 @@
+"use client"
+
 import type React from "react"
-import type { Metadata } from "next"
-
+import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Header } from "@/components/header"
-
-export const metadata: Metadata = {
-  title: "Finance Dashboard",
-  description: "Manage your finances with ease",
-}
+import { MonthSelectionProvider } from "@/hooks/use-month-selection"
+import { Toaster } from "@/components/ui/toaster"
 
 export default function DashboardLayout({
   children,
@@ -16,12 +13,17 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <SidebarProvider defaultOpen={false}>
-      <AppSidebar />
-      <SidebarInset>
-        <Header />
-        <div className="flex-1 p-4 pt-6 md:p-8">{children}</div>
-      </SidebarInset>
-    </SidebarProvider>
+    <MonthSelectionProvider>
+      <SidebarProvider defaultOpen={false}>
+        <div className="flex min-h-screen w-full bg-background">
+          <AppSidebar />
+          <div className="flex-1 flex flex-col bg-background">
+            <Header />
+            <main className="flex-1 p-6 bg-background">{children}</main>
+          </div>
+        </div>
+        <Toaster />
+      </SidebarProvider>
+    </MonthSelectionProvider>
   )
 }

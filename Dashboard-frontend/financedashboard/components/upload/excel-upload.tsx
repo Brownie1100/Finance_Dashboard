@@ -178,7 +178,14 @@ export function ExcelUpload({ type, onSuccess }: ExcelUploadProps) {
 
   return (
     <>
-      <input ref={fileInputRef} type="file" accept=".xls,.xlsx" onChange={handleFileChange} className="hidden" />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xls,.xlsx"
+        onChange={handleFileChange}
+        className="hidden"
+        title="Upload Excel file"
+      />
       <Button onClick={handleFileSelect} disabled={isUploading} variant="outline" size="sm" className="gap-2">
         {isUploading ? (
           <>

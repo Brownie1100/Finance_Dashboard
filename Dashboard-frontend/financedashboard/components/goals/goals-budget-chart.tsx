@@ -45,24 +45,24 @@ export function GoalsBudgetChart({ goals, expenses }: GoalsBudgetChartProps) {
       config={{
         budget: {
           label: "Budget",
-          color: "hsl(var(--chart-1))",
+          color: "hsl(220, 100%, 50%)",
         },
         spent: {
           label: "Spent",
-          color: "hsl(var(--chart-2))",
+          color: "hsl(140, 100%, 40%)",
         },
       }}
       className="h-[300px]"
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="category" />
-          <YAxis />
+        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} barGap={0} barCategoryGap={30}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey="category" axisLine={false} tickLine={false} />
+          <YAxis axisLine={false} tickLine={false} />
           <ChartTooltip content={<ChartTooltipContent />} />
-          <Legend />
-          <Bar dataKey="budget" fill="var(--color-budget)" name="Budget" />
-          <Bar dataKey="spent" fill="var(--color-spent)" name="Spent" />
+          <Legend verticalAlign="top" height={36} />
+          <Bar dataKey="budget" fill="var(--color-budget)" name="Budget" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="spent" fill="var(--color-spent)" name="Spent" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </ChartContainer>

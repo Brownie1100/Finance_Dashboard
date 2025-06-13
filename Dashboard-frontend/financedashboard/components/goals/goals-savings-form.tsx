@@ -16,6 +16,7 @@ import { toast } from "@/components/ui/use-toast"
 import { useCurrency } from "@/hooks/use-currency"
 import { useUser } from "@/hooks/use-user"
 import { cn } from "@/lib/utils"
+import { createGoal } from "@/lib/api"
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -82,37 +83,27 @@ export function GoalsSavingsForm({ availableSavings, onSuccess }: GoalsSavingsFo
     try {
       const today = new Date()
 
-      const response = await fetch("http://localhost:8282/api/goal", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: userId,
-          category: values.name,
-          type: "Savings",
-          amount: Number(values.targetAmount),
-          startDate: today.toISOString().split("T")[0],
-          endDate: values.targetDate.toISOString().split("T")[0],
-          description: values.notes || "",
-        }),
+      const goalData = {
+        userId: userId,
+        category: values.name,
+        type: "Savings",
+        amount: Number(values.targetAmount),
+        startDate: today.toISOString().split("T")[0],
+        endDate: values.targetDate.toISOString().split("T")[0],
+        description: values.notes || "",
+      }
+
+      await createGoal(userId, goalData)
+
+      toast({
+        title: "Savings goal created successfully",
+        description: `${values.name} goal has been created with a target of ${formatAmount(Number(values.targetAmount))}.`,
+        className:
+          "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/50 dark:border-blue-800/50 dark:text-blue-300",
       })
 
-      if (response.ok) {
-        toast({
-          title: "Savings goal created successfully",
-          description: `${values.name} goal has been created with a target of ${formatAmount(Number(values.targetAmount))}.`,
-        })
-        form.reset()
-        onSuccess()
-      } else {
-        const errorData = await response.json().catch(() => null)
-        toast({
-          title: "Failed to create savings goal",
-          description: errorData?.message || "An error occurred while creating the goal.",
-          variant: "destructive",
-        })
-      }
+      form.reset()
+      onSuccess()
     } catch (error) {
       console.error("Error creating savings goal:", error)
       toast({

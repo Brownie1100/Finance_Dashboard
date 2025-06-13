@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/components/ui/use-toast"
 import { useCurrency } from "@/hooks/use-currency"
 import { useUser } from "@/hooks/use-user"
+import { createIncome } from "@/lib/api"
 
 const formSchema = z.object({
   amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
@@ -61,37 +62,34 @@ export function IncomeForm({ onIncomeAdded }: IncomeFormProps) {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch(`http://localhost:8282/api/income`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      // Send as array with single object
+      const requestData = [
+        {
           userId: userId,
           category: values.category,
           amount: Number(values.amount),
-          date: values.date.toISOString().split("T")[0], // Format as YYYY-MM-DD
+          date: values.date.toISOString().split("T")[0],
           description: values.description ?? "",
-        }),
+        },
+      ]
+
+      await createIncome(userId, requestData)
+
+      toast({
+        title: "Income added successfully",
+        description: `${formatAmount(Number(values.amount))} from ${values.category.replace(/-/g, " ")} has been recorded.`,
+        className:
+          "bg-green-50 border-green-200 text-green-800 dark:bg-green-950/50 dark:border-green-800/50 dark:text-green-300",
       })
 
-      if (response.ok) {
-        toast({
-          title: "Income added successfully",
-          description: `${formatAmount(Number(values.amount))} from ${values.category} has been recorded.`,
-        })
-        form.reset({
-          amount: "",
-          date: new Date(),
-          description: "",
-          category: undefined,
-        })
-        onIncomeAdded() // Refresh the parent component
-      } else {
-        const errorData = await response.text()
-        console.error("API Error:", errorData)
-        throw new Error("Failed to add income")
-      }
+      form.reset({
+        amount: "",
+        date: new Date(),
+        description: "",
+        category: undefined,
+      })
+
+      onIncomeAdded()
     } catch (error) {
       console.error("Error adding income:", error)
       toast({
@@ -165,7 +163,7 @@ export function IncomeForm({ onIncomeAdded }: IncomeFormProps) {
           name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-green-800">Income Source</FormLabel>
+              <FormLabel className="text-green-800">Source</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger className="border-green-200/50 focus-visible:ring-green-500">
@@ -174,9 +172,9 @@ export function IncomeForm({ onIncomeAdded }: IncomeFormProps) {
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="salary">Salary</SelectItem>
-                  <SelectItem value="freelance">Freelance</SelectItem>
-                  <SelectItem value="investments">Investments</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="fd-rd-sip-return">FD/RD/SIP return</SelectItem>
+                  <SelectItem value="investments-return">Investments return</SelectItem>
+                  <SelectItem value="other-incomes">Other incomes</SelectItem>
                 </SelectContent>
               </Select>
               <FormDescription className="text-green-600">Select the source of your income</FormDescription>

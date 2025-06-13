@@ -4,14 +4,21 @@ import { PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { IncomeChart } from "@/components/income/income-chart"
+import { IncomePieChart } from "@/components/charts/income-pie-chart"
+import { IncomeComparisonChart } from "@/components/charts/income-comparison-chart"
 import { IncomeTable } from "@/components/income/income-table"
-import { MonthFilter } from "@/components/month-filter"
+import { IncomeForm } from "@/components/income/income-form"
+import { MonthYearPicker } from "@/components/month-year-picker"
+import { ComparisonMonthPicker } from "@/components/comparison-month-picker"
+import { ExcelUpload } from "@/components/upload/excel-upload"
 import { useCurrency } from "@/hooks/use-currency"
 import { useUser } from "@/hooks/use-user"
+import { useMonthSelection } from "@/hooks/use-month-selection"
 import { safeReduce, ensureArray } from "@/lib/array-utils"
 import { filterDataByMonth } from "@/lib/date-utils"
-import { IncomeFormDebug } from "@/components/income/income-form-debug"
+import { AmountVsDayChart } from "@/components/charts/amount-vs-day-chart"
+import { fetchIncomes } from "@/lib/api"
+import { toast } from "sonner"
 
 interface Income {
   id: number
@@ -24,50 +31,48 @@ interface Income {
 export default function IncomePage() {
   const { formatAmount } = useCurrency()
   const { userId } = useUser()
+  const { selectedMonth, comparisonMonth, setComparisonMonth } = useMonthSelection()
   const [incomes, setIncomes] = useState<Income[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
-  const [selectedMonth, setSelectedMonth] = useState("all")
 
-  const fetchIncomes = async () => {
-    if (!userId) {
-      setLoading(false)
-      return
-    }
-
+  const loadIncomes = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:8282/api/income/${userId}`)
-      if (response.ok) {
-        const data = await response.json()
-        const incomeArray = ensureArray(data)
-        setIncomes(incomeArray)
-      }
+      const data = await fetchIncomes(userId || "default")
+      const incomeArray = ensureArray(data)
+      // Sort by date ascending
+      incomeArray.sort((a, b) => new Date((a as Income).date).getTime() - new Date((b as Income).date).getTime())
+      setIncomes(incomeArray as Income[])
+      toast.success(`Loaded ${incomeArray.length} income records`)
     } catch (error) {
       console.error("Error fetching incomes:", error)
+      setIncomes([])
+      toast.error("Failed to load income data")
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchIncomes()
+    loadIncomes()
   }, [userId])
 
   const handleIncomeAdded = () => {
-    fetchIncomes() // Refresh the data
+    loadIncomes()
   }
 
   const handleIncomeDeleted = () => {
-    fetchIncomes() // Refresh the data
+    loadIncomes()
   }
 
   const handleIncomeUpdated = () => {
-    fetchIncomes() // Refresh the data
+    loadIncomes()
   }
 
-  // Filter data by selected month
+  // Filter data by selected month and comparison month
   const filteredIncomes = filterDataByMonth(incomes, selectedMonth)
+  const comparisonIncomes = filterDataByMonth(incomes, comparisonMonth)
 
   // Calculate totals using safe reduce on filtered data
   const totalIncome = safeReduce(filteredIncomes, (sum, income) => sum + income.amount, 0)
@@ -85,12 +90,35 @@ export default function IncomePage() {
   const primaryIncome = incomeBySource["salary"] || 0
   const secondaryIncome = totalIncome - primaryIncome
 
+  // Get month names for labels
+  const getMonthName = (monthStr: string) => {
+    if (!monthStr || monthStr === "all-time") return "All Time"
+    const [year, month] = monthStr.split("-")
+    const date = new Date(Number(year), Number(month) - 1)
+    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+  }
+
+  const currentMonthName = getMonthName(selectedMonth)
+  const comparisonMonthName = getMonthName(comparisonMonth)
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-green-50/30 dark:bg-green-950/10">
+        <div className="text-center">
+          <div className="text-2xl font-bold mb-2 text-green-700 dark:text-green-400">Loading...</div>
+          <p className="text-green-600 dark:text-green-400">Fetching your income data</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex-1 space-y-4 bg-green-50/30 dark:bg-green-950/10">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight text-green-700 dark:text-green-400">Income</h2>
         <div className="flex items-center gap-2">
-          <MonthFilter selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
+          <MonthYearPicker />
+          <ExcelUpload type="income" onSuccess={handleIncomeAdded} />
           <Button className="bg-green-600 hover:bg-green-700" onClick={() => setActiveTab("add")}>
             <PlusIcon className="mr-2 h-4 w-4" />
             Add Income
@@ -103,7 +131,7 @@ export default function IncomePage() {
             Overview
           </TabsTrigger>
           <TabsTrigger value="sources" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
-            Income Sources
+            Sources
           </TabsTrigger>
           <TabsTrigger value="add" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
             Add Income
@@ -114,13 +142,13 @@ export default function IncomePage() {
             <Card className="border-green-200/50 dark:border-green-800/50">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-green-800 dark:text-green-200">
-                  Total Income {selectedMonth !== "all" && "(Filtered)"}
+                  Total Income {selectedMonth !== "all-time" && "(Current Month)"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-700 dark:text-green-300">{formatAmount(totalIncome)}</div>
                 <p className="text-xs text-green-600 dark:text-green-400">
-                  {selectedMonth === "all" ? "All time" : "Selected month"}
+                  {selectedMonth === "all-time" ? "All time" : "Selected month"}
                 </p>
               </CardContent>
             </Card>
@@ -158,55 +186,67 @@ export default function IncomePage() {
               </CardContent>
             </Card>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4 border-green-200/50 dark:border-green-800/50">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="border-green-200/50 dark:border-green-800/50">
               <CardHeader>
-                <CardTitle className="text-green-800 dark:text-green-200">Income Trends</CardTitle>
-                <CardDescription className="text-green-600 dark:text-green-400">Your income over time</CardDescription>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <IncomeChart incomes={filteredIncomes} />
-              </CardContent>
-            </Card>
-            <Card className="col-span-3 border-green-200/50 dark:border-green-800/50">
-              <CardHeader>
-                <CardTitle className="text-green-800 dark:text-green-200">Income Sources</CardTitle>
+                <CardTitle className="text-green-800 dark:text-green-200">Income Distribution</CardTitle>
                 <CardDescription className="text-green-600 dark:text-green-400">
                   Breakdown of your income by source
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {Object.entries(incomeBySource).map(([source, amount]) => {
-                    const percentage = totalIncome > 0 ? (amount / totalIncome) * 100 : 0
-                    return (
-                      <div key={source} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-green-800 dark:text-green-200 capitalize">
-                            {source}
-                          </span>
-                          <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                            {formatAmount(amount)}
-                          </span>
-                        </div>
-                        <div className="h-2 w-full rounded-full bg-green-100/50 dark:bg-green-900/30">
-                          <div className="h-full rounded-full bg-green-500" style={{ width: `${percentage}%` }} />
-                        </div>
-                        <p className="text-xs text-green-600 dark:text-green-400 text-right">
-                          {percentage.toFixed(1)}%
-                        </p>
-                      </div>
-                    )
-                  })}
-                  {Object.keys(incomeBySource).length === 0 && (
-                    <p className="text-sm text-green-600 dark:text-green-400 text-center py-4">
-                      No income data available for selected period
-                    </p>
-                  )}
+              <CardContent className="pl-2">
+                {filteredIncomes.length > 0 ? (
+                  <IncomePieChart incomes={filteredIncomes} />
+                ) : (
+                  <div className="flex items-center justify-center h-64">
+                    <p className="text-green-600 dark:text-green-400">No income data available</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Card className="border-green-200/50 dark:border-green-800/50">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-green-800 dark:text-green-200">Income Comparison</CardTitle>
+                  <CardDescription className="text-green-600 dark:text-green-400">
+                    Compare income between periods
+                  </CardDescription>
                 </div>
+                <ComparisonMonthPicker
+                  selectedMonth={comparisonMonth}
+                  onMonthChange={setComparisonMonth}
+                  className="w-[240px]"
+                />
+              </CardHeader>
+              <CardContent className="pl-2">
+                {filteredIncomes.length > 0 || comparisonIncomes.length > 0 ? (
+                  <IncomeComparisonChart
+                    currentIncome={filteredIncomes}
+                    comparisonIncome={comparisonIncomes}
+                    currentLabel={currentMonthName}
+                    comparisonLabel={comparisonMonthName}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-64">
+                    <p className="text-green-600 dark:text-green-400">No income data available for comparison</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
+
+          {/* Add Income Amount vs Day Chart */}
+          <Card className="border-green-200/50 dark:border-green-800/50">
+            <CardHeader>
+              <CardTitle className="text-green-800 dark:text-green-200">Income Amount vs Day</CardTitle>
+              <CardDescription className="text-green-600 dark:text-green-400">
+                Daily income distribution over time
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AmountVsDayChart data={filteredIncomes} color="#22c55e" type="income" />
+            </CardContent>
+          </Card>
         </TabsContent>
         <TabsContent value="sources" className="space-y-4">
           <Card className="border-green-200/50 dark:border-green-800/50">
@@ -216,12 +256,21 @@ export default function IncomePage() {
                 Manage and view all your income sources
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <IncomeTable
-                incomes={filteredIncomes}
-                onIncomeDeleted={handleIncomeDeleted}
-                onIncomeUpdated={handleIncomeUpdated}
-              />
+            <CardContent className="max-h-[600px] overflow-y-auto">
+              {filteredIncomes.length > 0 ? (
+                <IncomeTable
+                  incomes={filteredIncomes}
+                  onIncomeDeleted={handleIncomeDeleted}
+                  onIncomeUpdated={handleIncomeUpdated}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-green-600 dark:text-green-400">No income data available</p>
+                  <Button className="mt-4 bg-green-600 hover:bg-green-700" onClick={() => setActiveTab("add")}>
+                    Add Income
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -234,7 +283,7 @@ export default function IncomePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <IncomeFormDebug onIncomeAdded={handleIncomeAdded} />
+              <IncomeForm onIncomeAdded={handleIncomeAdded} />
             </CardContent>
           </Card>
         </TabsContent>

@@ -10,7 +10,7 @@ import "./HomePage.css"
 export default function HomePage() {
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const { setUserId } = useUser()
+  const { setUserId, setUser } = useUser()
 
   // Sign Up states
   const [name, setName] = useState("")
@@ -32,7 +32,7 @@ export default function HomePage() {
 
   // Validation functions (same as before)
   const checkName = () => {
-    const namePattern =  /^[a-zA-Z0-9 _-]{2,30}$/
+    const namePattern = /^[a-zA-Z0-9 _-]{2,30}$/
     if (!namePattern.test(name)) {
       nameFieldRef.current!.style.display = "inline"
     } else {
@@ -138,8 +138,17 @@ export default function HomePage() {
         const user = await res.json()
 
         if (user?.id) {
-          // Store user ID in context
+          // Store full user information in context
           setUserId(user.id.toString())
+          setUser({
+            id: user.id.toString(),
+            name: user.name || email1.split("@")[0],
+            email: user.email || email1,
+          })
+
+          // Force theme application before navigation
+          document.documentElement.classList.add("dark")
+          document.body.style.backgroundColor = "hsl(222.2 84% 4.9%)"
           // Redirect to dashboard
           router.push("/dashboard")
         } else {
@@ -162,7 +171,10 @@ export default function HomePage() {
   }
 
   return (
-    <div className="container-wrapper">
+    <div
+      className="container-wrapper min-h-screen"
+      style={{ background: "linear-gradient(to right, #e0c3fc, #8ec5fc)" }}
+    >
       <div className="container active" ref={containerRef} id="container">
         {/* Sign Up Form */}
         <div className="form-container sign-up">

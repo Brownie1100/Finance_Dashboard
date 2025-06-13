@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/components/ui/use-toast"
 import { useCurrency } from "@/hooks/use-currency"
 import { useUser } from "@/hooks/use-user"
+import { createExpense } from "@/lib/api"
 
 const formSchema = z.object({
   amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
@@ -61,37 +62,34 @@ export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch(`http://localhost:8282/api/expense`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      // Send as array with single object
+      const requestData = [
+        {
           userId: userId,
           category: values.category,
           amount: Number(values.amount),
-          date: values.date.toISOString().split("T")[0], // Format as YYYY-MM-DD
+          date: values.date.toISOString().split("T")[0],
           description: values.description ?? "",
-        }),
+        },
+      ]
+
+      await createExpense(userId, requestData)
+
+      toast({
+        title: "Expense added successfully",
+        description: `${formatAmount(Number(values.amount))} for ${values.category.replace(/-/g, " ")} has been recorded.`,
+        className:
+          "bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950/50 dark:border-yellow-800/50 dark:text-yellow-300",
       })
 
-      if (response.ok) {
-        toast({
-          title: "Expense added successfully",
-          description: `${formatAmount(Number(values.amount))} for ${values.category} has been recorded.`,
-        })
-        form.reset({
-          amount: "",
-          date: new Date(),
-          description: "",
-          category: undefined,
-        })
-        onExpenseAdded() // Refresh the parent component
-      } else {
-        const errorData = await response.text()
-        console.error("API Error:", errorData)
-        throw new Error("Failed to add expense")
-      }
+      form.reset({
+        amount: "",
+        date: new Date(),
+        description: "",
+        category: undefined,
+      })
+
+      onExpenseAdded()
     } catch (error) {
       console.error("Error adding expense:", error)
       toast({
@@ -173,12 +171,16 @@ export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="housing">Housing</SelectItem>
-                  <SelectItem value="food">Food</SelectItem>
-                  <SelectItem value="transportation">Transportation</SelectItem>
-                  <SelectItem value="utilities">Utilities</SelectItem>
-                  <SelectItem value="entertainment">Entertainment</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="foods-and-drinks">Foods and Drinks</SelectItem>
+                  <SelectItem value="rent">Rent</SelectItem>
+                  <SelectItem value="electricity">Electricity</SelectItem>
+                  <SelectItem value="travel">Travel</SelectItem>
+                  <SelectItem value="fd-rd-sip-insurance-other-plans">FD/RD/SIP Insurance/Other plans</SelectItem>
+                  <SelectItem value="investments">Investments</SelectItem>
+                  <SelectItem value="daily-essentials">Daily essentials</SelectItem>
+                  <SelectItem value="clothes">Clothes</SelectItem>
+                  <SelectItem value="haircut">Haircut</SelectItem>
+                  <SelectItem value="other-expenditures">Other Expenditures</SelectItem>
                 </SelectContent>
               </Select>
               <FormDescription className="text-yellow-600">Select the category of your expense</FormDescription>

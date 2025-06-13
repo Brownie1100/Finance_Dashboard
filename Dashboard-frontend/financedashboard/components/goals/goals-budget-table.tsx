@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { DotsHorizontalIcon } from "@radix-ui/react-icons"
+import { Trash2, Edit } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -24,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface Goal {
   id: number
@@ -55,6 +57,7 @@ export function GoalsBudgetTable({ goals, expenses, onRefresh }: GoalsBudgetTabl
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [selectedGoals, setSelectedGoals] = useState<number[]>([])
 
   // Calculate spent amount for each category
   const getSpentAmount = (category: string) => {
@@ -96,11 +99,34 @@ export function GoalsBudgetTable({ goals, expenses, onRefresh }: GoalsBudgetTabl
     }
   }
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allGoalIds = goals.map((goal) => goal.id)
+      setSelectedGoals(allGoalIds)
+    } else {
+      setSelectedGoals([])
+    }
+  }
+
+  const handleSelectGoal = (goalId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedGoals([...selectedGoals, goalId])
+    } else {
+      setSelectedGoals(selectedGoals.filter((id) => id !== goalId))
+    }
+  }
+
   return (
     <div className="rounded-md border border-blue-200/50">
       <Table>
         <TableHeader className="bg-blue-50/50">
           <TableRow>
+            <TableHead className="w-12">
+              <Checkbox
+                checked={selectedGoals.length === goals.length && goals.length > 0}
+                onCheckedChange={handleSelectAll}
+              />
+            </TableHead>
             <TableHead className="text-blue-800">Category</TableHead>
             <TableHead className="text-blue-800">Allocated</TableHead>
             <TableHead className="text-blue-800">Spent</TableHead>
@@ -117,6 +143,12 @@ export function GoalsBudgetTable({ goals, expenses, onRefresh }: GoalsBudgetTabl
 
             return (
               <TableRow key={goal.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedGoals.includes(goal.id)}
+                    onCheckedChange={(checked) => handleSelectGoal(goal.id, checked as boolean)}
+                  />
+                </TableCell>
                 <TableCell className="font-medium">{goal.category}</TableCell>
                 <TableCell>{formatAmount(goal.amount)}</TableCell>
                 <TableCell>{formatAmount(spent)}</TableCell>
@@ -137,6 +169,10 @@ export function GoalsBudgetTable({ goals, expenses, onRefresh }: GoalsBudgetTabl
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-red-600"
@@ -145,6 +181,7 @@ export function GoalsBudgetTable({ goals, expenses, onRefresh }: GoalsBudgetTabl
                           setDeleteDialogOpen(true)
                         }}
                       >
+                        <Trash2 className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>

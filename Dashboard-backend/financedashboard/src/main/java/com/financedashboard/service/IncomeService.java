@@ -9,4 +9,5 @@ public interface IncomeService {
     List<Income> saveIncome(List<Income> income);
     Income updateIncome(Long id, Income income);
     void deleteIncome(Long id);
+    void deleteAllIncomes(List<Long> ids);
 }

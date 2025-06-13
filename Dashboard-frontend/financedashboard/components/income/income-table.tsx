@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { DotsHorizontalIcon } from "@radix-ui/react-icons"
-import { CalendarIcon, Edit, Save, X } from "lucide-react"
+import { CalendarIcon, Edit, Save, Trash2, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -22,6 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/components/ui/use-toast"
 import { useCurrency } from "@/hooks/use-currency"
 import { cn } from "@/lib/utils"
+import { deleteIncomes, updateIncome } from "@/lib/api"
 
 interface Income {
   id: number
@@ -69,25 +70,30 @@ export function IncomeTable({ incomes, onIncomeDeleted, onIncomeUpdated }: Incom
     }
   }
 
-  const deleteIncome = async (id: number) => {
-    try {
-      const response = await fetch(`http://localhost:8282/api/income/${id}`, {
-        method: "DELETE",
+  const deleteSelectedIncomes = async () => {
+    if (selectedIncomes.length === 0) {
+      toast({
+        title: "No selection",
+        description: "Please select at least one income to delete.",
+        variant: "destructive",
       })
+      return
+    }
 
-      if (response.ok) {
-        toast({
-          title: "Income deleted successfully",
-          description: "The income record has been removed.",
-        })
-        onIncomeDeleted()
-      } else {
-        throw new Error("Failed to delete income")
-      }
+    try {
+      await deleteIncomes(selectedIncomes)
+      toast({
+        title: "Incomes deleted successfully",
+        description: `${selectedIncomes.length} income(s) have been removed.`,
+        className:
+          "bg-green-50 border-green-200 text-green-800 dark:bg-green-950/50 dark:border-green-800/50 dark:text-green-300",
+      })
+      setSelectedIncomes([])
+      onIncomeDeleted()
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to delete income. Please try again.",
+        description: "Failed to delete incomes. Please try again.",
         variant: "destructive",
       })
     }
@@ -96,7 +102,7 @@ export function IncomeTable({ incomes, onIncomeDeleted, onIncomeUpdated }: Incom
   const startEdit = (income: Income) => {
     setEditingIncome(income.id)
     setEditForm({
-      category: income.category,
+      category: income.category || "salary", // Provide default value
       amount: income.amount.toString(),
       date: new Date(income.date),
       description: income.description || "",
@@ -115,29 +121,22 @@ export function IncomeTable({ incomes, onIncomeDeleted, onIncomeUpdated }: Incom
 
   const saveEdit = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:8282/api/income/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          category: editForm.category,
-          amount: Number(editForm.amount),
-          date: editForm.date.toISOString().split("T")[0],
-          description: editForm.description,
-        }),
-      })
-
-      if (response.ok) {
-        toast({
-          title: "Income updated successfully",
-          description: "The income record has been updated.",
-        })
-        setEditingIncome(null)
-        onIncomeUpdated()
-      } else {
-        throw new Error("Failed to update income")
+      const updateData = {
+        category: editForm.category,
+        amount: Number(editForm.amount),
+        date: editForm.date.toISOString().split("T")[0],
+        description: editForm.description,
       }
+
+      await updateIncome(id, updateData)
+      toast({
+        title: "Income updated successfully",
+        description: "The income record has been updated.",
+        className:
+          "bg-green-50 border-green-200 text-green-800 dark:bg-green-950/50 dark:border-green-800/50 dark:text-green-300",
+      })
+      setEditingIncome(null)
+      onIncomeUpdated()
     } catch (error) {
       toast({
         title: "Error",
@@ -174,6 +173,16 @@ export function IncomeTable({ incomes, onIncomeDeleted, onIncomeUpdated }: Incom
         <Button onClick={updateSelectedIncomes} disabled={selectedIncomes.length !== 1} size="sm" variant="outline">
           <Edit className="h-4 w-4 mr-2" />
           Edit Selected
+        </Button>
+        <Button
+          onClick={deleteSelectedIncomes}
+          disabled={selectedIncomes.length === 0}
+          size="sm"
+          variant="outline"
+          className="text-red-600 hover:bg-red-100"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete Selected
         </Button>
         <span className="text-sm text-muted-foreground">
           {selectedIncomes.length} of {incomes.length} selected
@@ -248,17 +257,17 @@ export function IncomeTable({ incomes, onIncomeDeleted, onIncomeUpdated }: Incom
                         onValueChange={(value) => setEditForm({ ...editForm, category: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select source" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="salary">Salary</SelectItem>
-                          <SelectItem value="freelance">Freelance</SelectItem>
-                          <SelectItem value="investments">Investments</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="fd-rd-sip-return">FD/RD/SIP return</SelectItem>
+                          <SelectItem value="investments-return">Investments return</SelectItem>
+                          <SelectItem value="other-incomes">Other incomes</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
-                      <span className="capitalize">{item.category}</span>
+                      <span className="capitalize">{item.category.replace(/-/g, " ")}</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -307,7 +316,27 @@ export function IncomeTable({ incomes, onIncomeDeleted, onIncomeUpdated }: Incom
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => startEdit(item)}>Edit</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600" onClick={() => deleteIncome(item.id)}>
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={async () => {
+                              try {
+                                await deleteIncomes([item.id])
+                                toast({
+                                  title: "Income deleted successfully",
+                                  description: "The income record has been removed.",
+                                  className:
+                                    "bg-green-50 border-green-200 text-green-800 dark:bg-green-950/50 dark:border-green-800/50 dark:text-green-300",
+                                })
+                                onIncomeDeleted()
+                              } catch (error) {
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to delete income. Please try again.",
+                                  variant: "destructive",
+                                })
+                              }
+                            }}
+                          >
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>

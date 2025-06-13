@@ -38,6 +38,7 @@ public class IncomeServiceImpl implements IncomeService {
             existing.setCategory(income.getCategory());
             existing.setAmount(income.getAmount());
             existing.setDate(income.getDate());
+            existing.setDescription(income.getDescription());
             return incomeRepository.save(existing);
         }
         return null;
@@ -46,5 +47,9 @@ public class IncomeServiceImpl implements IncomeService {
     @Override
     public void deleteIncome(Long id) {
         incomeRepository.deleteById(id);
+    }
+    @Override
+    public void deleteAllIncomes(List<Long> ids) {
+        incomeRepository.deleteAllById(ids);
     }
 }

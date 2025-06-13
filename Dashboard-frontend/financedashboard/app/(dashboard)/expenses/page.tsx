@@ -4,14 +4,21 @@ import { PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ExpenseChart } from "@/components/expenses/expense-chart"
+import { ExpensePieChart } from "@/components/charts/expense-pie-chart"
+import { ExpenseComparisonChart } from "@/components/charts/expense-comparison-chart"
+import { AmountVsDayChart } from "@/components/charts/amount-vs-day-chart"
 import { ExpenseTable } from "@/components/expenses/expense-table"
-import { MonthFilter } from "@/components/month-filter"
+import { ExpenseForm } from "@/components/expenses/expense-form"
+import { MonthYearPicker } from "@/components/month-year-picker"
+import { ComparisonMonthPicker } from "@/components/comparison-month-picker"
+import { ExcelUpload } from "@/components/upload/excel-upload"
 import { useCurrency } from "@/hooks/use-currency"
 import { useUser } from "@/hooks/use-user"
+import { useMonthSelection } from "@/hooks/use-month-selection"
 import { safeReduce, ensureArray } from "@/lib/array-utils"
 import { filterDataByMonth } from "@/lib/date-utils"
-import { ExpenseFormDebug } from "@/components/expenses/expense-form-debug"
+import { fetchExpenses } from "@/lib/api"
+import { toast } from "sonner"
 
 interface Expense {
   id: number
@@ -24,50 +31,48 @@ interface Expense {
 export default function ExpensesPage() {
   const { formatAmount } = useCurrency()
   const { userId } = useUser()
+  const { selectedMonth, comparisonMonth, setComparisonMonth } = useMonthSelection()
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
-  const [selectedMonth, setSelectedMonth] = useState("all")
 
-  const fetchExpenses = async () => {
-    if (!userId) {
-      setLoading(false)
-      return
-    }
-
+  const loadExpenses = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:8282/api/expense/${userId}`)
-      if (response.ok) {
-        const data = await response.json()
-        const expenseArray = ensureArray(data)
-        setExpenses(expenseArray)
-      }
+      const data = await fetchExpenses(userId || "default")
+      const expenseArray = ensureArray(data)
+      // Sort by date ascending
+      expenseArray.sort((a, b) => new Date((a as Expense).date).getTime() - new Date((b as Expense).date).getTime())
+      setExpenses(expenseArray as Expense[])
+      toast.success(`Loaded ${expenseArray.length} expense records`)
     } catch (error) {
       console.error("Error fetching expenses:", error)
+      setExpenses([])
+      toast.error("Failed to load expense data")
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchExpenses()
+    loadExpenses()
   }, [userId])
 
   const handleExpenseAdded = () => {
-    fetchExpenses() // Refresh the data
+    loadExpenses()
   }
 
   const handleExpenseDeleted = () => {
-    fetchExpenses() // Refresh the data
+    loadExpenses()
   }
 
   const handleExpenseUpdated = () => {
-    fetchExpenses() // Refresh the data
+    loadExpenses()
   }
 
-  // Filter data by selected month
+  // Filter data by selected month and comparison month
   const filteredExpenses = filterDataByMonth(expenses, selectedMonth)
+  const comparisonExpenses = filterDataByMonth(expenses, comparisonMonth)
 
   // Calculate totals using safe reduce on filtered data
   const totalExpenses = safeReduce(filteredExpenses, (sum, expense) => sum + expense.amount, 0)
@@ -89,12 +94,35 @@ export default function ExpensesPage() {
 
   const dailyAverage = filteredExpenses.length > 0 ? totalExpenses / 30 : 0
 
+  // Get month names for labels
+  const getMonthName = (monthStr: string) => {
+    if (!monthStr || monthStr === "all-time") return "All Time"
+    const [year, month] = monthStr.split("-")
+    const date = new Date(Number(year), Number(month) - 1)
+    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+  }
+
+  const currentMonthName = getMonthName(selectedMonth)
+  const comparisonMonthName = getMonthName(comparisonMonth)
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-yellow-50/30 dark:bg-yellow-950/10">
+        <div className="text-center">
+          <div className="text-2xl font-bold mb-2 text-yellow-700 dark:text-yellow-400">Loading...</div>
+          <p className="text-yellow-600 dark:text-yellow-400">Fetching your expense data</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex-1 space-y-4 bg-yellow-50/30 dark:bg-yellow-950/10">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight text-yellow-700 dark:text-yellow-400">Expenses</h2>
         <div className="flex items-center gap-2">
-          <MonthFilter selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
+          <MonthYearPicker />
+          <ExcelUpload type="expense" onSuccess={handleExpenseAdded} />
           <Button className="bg-yellow-600 hover:bg-yellow-700" onClick={() => setActiveTab("add")}>
             <PlusIcon className="mr-2 h-4 w-4" />
             Add Expense
@@ -115,10 +143,10 @@ export default function ExpensesPage() {
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="border-yellow-200 dark:border-yellow-800">
+            <Card className="border-yellow-200/50 dark:border-yellow-800/50">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                  Total Expenses {selectedMonth !== "all" && "(Filtered)"}
+                  Total Expenses {selectedMonth !== "all-time" && "(Current Month)"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -126,11 +154,11 @@ export default function ExpensesPage() {
                   {formatAmount(totalExpenses)}
                 </div>
                 <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                  {selectedMonth === "all" ? "All time" : "Selected month"}
+                  {selectedMonth === "all-time" ? "All time" : "Selected month"}
                 </p>
               </CardContent>
             </Card>
-            <Card className="border-yellow-200 dark:border-yellow-800">
+            <Card className="border-yellow-200/50 dark:border-yellow-800/50">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                   Largest Expense
@@ -145,7 +173,7 @@ export default function ExpensesPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="border-yellow-200 dark:border-yellow-800">
+            <Card className="border-yellow-200/50 dark:border-yellow-800/50">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                   Daily Average
@@ -158,7 +186,7 @@ export default function ExpensesPage() {
                 <p className="text-xs text-yellow-600 dark:text-yellow-400">30 days</p>
               </CardContent>
             </Card>
-            <Card className="border-yellow-200 dark:border-yellow-800">
+            <Card className="border-yellow-200/50 dark:border-yellow-800/50">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                   Total Entries
@@ -170,57 +198,67 @@ export default function ExpensesPage() {
               </CardContent>
             </Card>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4 border-yellow-200 dark:border-yellow-800">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="border-yellow-200 dark:border-yellow-800">
               <CardHeader>
-                <CardTitle className="text-yellow-800 dark:text-yellow-200">Expense Trends</CardTitle>
-                <CardDescription className="text-yellow-600 dark:text-yellow-400">
-                  Your expenses over time
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <ExpenseChart expenses={filteredExpenses} />
-              </CardContent>
-            </Card>
-            <Card className="col-span-3 border-yellow-200 dark:border-yellow-800">
-              <CardHeader>
-                <CardTitle className="text-yellow-800 dark:text-yellow-200">Expense Categories</CardTitle>
+                <CardTitle className="text-yellow-800 dark:text-yellow-200">Expense Distribution</CardTitle>
                 <CardDescription className="text-yellow-600 dark:text-yellow-400">
                   Breakdown of your expenses by category
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {Object.entries(expensesByCategory).map(([category, amount]) => {
-                    const percentage = totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0
-                    return (
-                      <div key={category} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200 capitalize">
-                            {category}
-                          </span>
-                          <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                            {formatAmount(amount)}
-                          </span>
-                        </div>
-                        <div className="h-2 w-full rounded-full bg-yellow-100 dark:bg-yellow-900">
-                          <div className="h-full rounded-full bg-yellow-500" style={{ width: `${percentage}%` }} />
-                        </div>
-                        <p className="text-xs text-yellow-600 dark:text-yellow-400 text-right">
-                          {percentage.toFixed(1)}%
-                        </p>
-                      </div>
-                    )
-                  })}
-                  {Object.keys(expensesByCategory).length === 0 && (
-                    <p className="text-sm text-yellow-600 dark:text-yellow-400 text-center py-4">
-                      No expense data available for selected period
-                    </p>
-                  )}
+              <CardContent className="pl-2">
+                {filteredExpenses.length > 0 ? (
+                  <ExpensePieChart expenses={filteredExpenses} />
+                ) : (
+                  <div className="flex items-center justify-center h-64">
+                    <p className="text-yellow-600 dark:text-yellow-400">No expense data available</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Card className="border-yellow-200 dark:border-yellow-800">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-yellow-800 dark:text-yellow-200">Expense Comparison</CardTitle>
+                  <CardDescription className="text-yellow-600 dark:text-yellow-400">
+                    Compare expenses between periods
+                  </CardDescription>
                 </div>
+                <ComparisonMonthPicker
+                  selectedMonth={comparisonMonth}
+                  onMonthChange={setComparisonMonth}
+                  className="w-[240px]"
+                />
+              </CardHeader>
+              <CardContent className="pl-2">
+                {filteredExpenses.length > 0 || comparisonExpenses.length > 0 ? (
+                  <ExpenseComparisonChart
+                    currentExpenses={filteredExpenses}
+                    comparisonExpenses={comparisonExpenses}
+                    currentLabel={currentMonthName}
+                    comparisonLabel={comparisonMonthName}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-64">
+                    <p className="text-yellow-600 dark:text-yellow-400">No expense data available for comparison</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
+
+          {/* Amount vs Day Chart */}
+          <Card className="border-yellow-200 dark:border-yellow-800">
+            <CardHeader>
+              <CardTitle className="text-yellow-800 dark:text-yellow-200">Expense Amount vs Day</CardTitle>
+              <CardDescription className="text-yellow-600 dark:text-yellow-400">
+                Daily expense amounts over time
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AmountVsDayChart data={filteredExpenses} color="#ca8a04" type="expense" />
+            </CardContent>
+          </Card>
         </TabsContent>
         <TabsContent value="categories" className="space-y-4">
           <Card className="border-yellow-200 dark:border-yellow-800">
@@ -230,12 +268,21 @@ export default function ExpensesPage() {
                 Manage and view all your expenses
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <ExpenseTable
-                expenses={filteredExpenses}
-                onExpenseDeleted={handleExpenseDeleted}
-                onExpenseUpdated={handleExpenseUpdated}
-              />
+            <CardContent className="max-h-[600px] overflow-y-auto">
+              {filteredExpenses.length > 0 ? (
+                <ExpenseTable
+                  expenses={filteredExpenses}
+                  onExpenseDeleted={handleExpenseDeleted}
+                  onExpenseUpdated={handleExpenseUpdated}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-yellow-600 dark:text-yellow-400">No expense data available</p>
+                  <Button className="mt-4 bg-yellow-600 hover:bg-yellow-700" onClick={() => setActiveTab("add")}>
+                    Add Expense
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -248,7 +295,7 @@ export default function ExpensesPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ExpenseFormDebug onExpenseAdded={handleExpenseAdded} />
+              <ExpenseForm onExpenseAdded={handleExpenseAdded} />
             </CardContent>
           </Card>
         </TabsContent>

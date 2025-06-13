@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "@/components/ui/use-toast"
 import { useCurrency } from "@/hooks/use-currency"
 import { useUser } from "@/hooks/use-user"
+import { createGoal } from "@/lib/api"
+import { toast } from "@/components/ui/use-toast"
 
 const formSchema = z.object({
   amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
@@ -57,37 +58,25 @@ export function GoalsBudgetForm({ onSuccess }: GoalsBudgetFormProps) {
       const today = new Date()
       const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
 
-      const response = await fetch("http://localhost:8282/api/goal", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: userId,
-          category: values.category,
-          type: "Budget",
-          amount: Number(values.amount),
-          startDate: today.toISOString().split("T")[0],
-          endDate: endOfMonth.toISOString().split("T")[0],
-          description: values.notes || "",
-        }),
+      const goalData = {
+        userId: userId,
+        category: values.category,
+        type: "Budget",
+        amount: Number(values.amount),
+        startDate: today.toISOString().split("T")[0],
+        endDate: endOfMonth.toISOString().split("T")[0],
+        description: values.notes || "",
+      }
+
+      await createGoal(userId, goalData)
+
+      toast({
+        title: "Budget goal created successfully",
+        description: `${formatAmount(Number(values.amount))} allocated for ${values.category}.`,
       })
 
-      if (response.ok) {
-        toast({
-          title: "Budget goal created successfully",
-          description: `${formatAmount(Number(values.amount))} allocated for ${values.category}.`,
-        })
-        form.reset()
-        onSuccess()
-      } else {
-        const errorData = await response.json().catch(() => null)
-        toast({
-          title: "Failed to create budget goal",
-          description: errorData?.message || "An error occurred while creating the goal.",
-          variant: "destructive",
-        })
-      }
+      form.reset()
+      onSuccess()
     } catch (error) {
       console.error("Error creating budget goal:", error)
       toast({
@@ -138,12 +127,16 @@ export function GoalsBudgetForm({ onSuccess }: GoalsBudgetFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Housing">Housing</SelectItem>
-                  <SelectItem value="Food">Food</SelectItem>
-                  <SelectItem value="Transportation">Transportation</SelectItem>
-                  <SelectItem value="Utilities">Utilities</SelectItem>
-                  <SelectItem value="Entertainment">Entertainment</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="foods-and-drinks">Foods and Drinks</SelectItem>
+                  <SelectItem value="rent">Rent</SelectItem>
+                  <SelectItem value="electricity">Electricity</SelectItem>
+                  <SelectItem value="travel">Travel</SelectItem>
+                  <SelectItem value="fd-rd-sip-insurance-other-plans">FD/RD/SIP Insurance/Other plans</SelectItem>
+                  <SelectItem value="investments">Investments</SelectItem>
+                  <SelectItem value="daily-essentials">Daily essentials</SelectItem>
+                  <SelectItem value="clothes">Clothes</SelectItem>
+                  <SelectItem value="haircut">Haircut</SelectItem>
+                  <SelectItem value="other-expenditures">Other Expenditures</SelectItem>
                 </SelectContent>
               </Select>
               <FormDescription className="text-blue-600">

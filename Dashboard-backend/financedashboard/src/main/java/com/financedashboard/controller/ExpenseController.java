@@ -40,4 +40,8 @@ public class ExpenseController {
     public void deleteExpense(@PathVariable Long id) {
         expenseService.deleteExpense(id);
     }
+    @DeleteMapping
+    public void deleteAllExpenses(@RequestBody List<Long> ids) {
+        expenseService.deleteAllExpenses(ids);
+    }
 }

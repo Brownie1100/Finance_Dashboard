@@ -38,6 +38,7 @@ public class ExpenseServiceImpl implements ExpenseService {
             existing.setCategory(expense.getCategory());
             existing.setAmount(expense.getAmount());
             existing.setDate(expense.getDate());
+            existing.setDescription(expense.getDescription());
             return expenseRepository.save(existing);
         }
         return null;
@@ -46,5 +47,9 @@ public class ExpenseServiceImpl implements ExpenseService {
     @Override
     public void deleteExpense(Long id) {
         expenseRepository.deleteById(id);
+    }
+    @Override
+    public void deleteAllExpenses(List<Long> ids) {
+        expenseRepository.deleteAllById(ids);
     }
 }
